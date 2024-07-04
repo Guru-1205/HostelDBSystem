@@ -1,8 +1,19 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { signOut } from "firebase/auth";
+import { Link, Navigate } from 'react-router-dom';
+
+import { auth } from "./firebase";
 import './Navbar.css'; // Assuming you have a separate CSS file for styling
 
 const Navbar = () => {
+  const handleSignOut = () => {
+    signOut(auth)
+      .then(() => {
+        <Navigate to="/"></Navigate>
+        console.log("Sign Out")
+      })
+      .catch((error) => console.log(error));
+  };
   return (
     <nav className="navbar">
       <div className="logoContainer">
@@ -11,11 +22,12 @@ const Navbar = () => {
       </div>
       <div className="nav-buttons"> {/* Use a div instead of ul */}
         <button className="nav-button">
-          <Link to="/root" className="nav-link">Home</Link> {/* Link styled as a button */}
+          <Link to="/home" className="nav-link">Home</Link> {/* Link styled as a button */}
         </button>
         <button className="nav-button">
           <Link to="/add-student" className="nav-link">Add Student</Link> {/* Link styled as a button */}
         </button>
+        <button className="nav-button" onClick={handleSignOut}>Sign Out</button>
       </div>
     </nav>
   );

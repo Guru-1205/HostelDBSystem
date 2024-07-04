@@ -47,7 +47,7 @@ const StudentDetails = () => {
     const handleDelete = async () => {
         try {
             await Axios.delete(`${URL}/delete-student/${id}`);
-            navigate('/');
+            navigate('/root');
         } catch (error) {
             console.error('Error deleting student:', error);
         }
