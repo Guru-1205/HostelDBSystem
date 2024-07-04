@@ -132,7 +132,7 @@ const AddStudent = () => {
                     return; // Stop further processing
                 }
 
-                const storageRef = ref(storage, `studentDetails/${docRef.id}/passportsizephoto/passportsizephoto.jpg`);
+                const storageRef = ref(storage, `studentDetails/${formData.rollNo}/passportsizephoto.jpg`);
                 await uploadBytes(storageRef, selectedFile);
 
                 // Optionally, update Firestore with photo URL if needed
