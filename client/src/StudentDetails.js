@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Axios from 'axios';
+import jsPDF from 'jspdf';
+import { storage } from './firebase'; // Import Firebase storage
+import { getDownloadURL, ref } from 'firebase/storage'; // Import required Firebase functions
 import './StudentDetails.css';
 
 const URL = process.env.REACT_APP_SERVER_URL;
@@ -10,6 +13,7 @@ const StudentDetails = () => {
     const [student, setStudent] = useState(null);
     const [isEditing, setIsEditing] = useState(false);
     const [updatedStudent, setUpdatedStudent] = useState({});
+    const [imageUrl, setImageUrl] = useState(''); // State to hold the image URL
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -18,8 +22,13 @@ const StudentDetails = () => {
                 const response = await Axios.get(`${URL}/student/${id}`);
                 setStudent(response.data);
                 setUpdatedStudent(response.data);
+
+                // Fetch image URL from Firebase Storage
+                const imageRef = ref(storage, `studentDetails/${response.data.rollNo}/passportsizephoto.jpg`);
+                const url = await getDownloadURL(imageRef);
+                setImageUrl(url);
             } catch (error) {
-                console.error('Error fetching student details:', error);
+                console.error('Error fetching student details or image URL:', error);
             }
         };
 
@@ -53,11 +62,66 @@ const StudentDetails = () => {
         }
     };
 
+    const generatePDF = () => {
+        const doc = new jsPDF();
+
+        doc.setFontSize(20);
+        doc.text(`Student Details: ${student.name}`, 20, 20);
+
+        const details = [
+            `Name: ${student.name}`,
+            `Roll Number: ${student.rollNo}`,
+            `Caste: ${student.caste}`,
+            `Community: ${student.community}`,
+            `Class, Branch, Section: ${student.classBranchSection}`,
+            `Year of Study: ${student.yearOfStudy}`,
+            `Father's Name: ${student.fatherName}`,
+            `Father's Occupation: ${student.fatherOccupation}`,
+            `Father's Income: ${student.fatherIncome}`,
+            `Father's Mobile: ${student.fatherMobile}`,
+            `Mother's Name: ${student.motherName}`,
+            `Mother's Occupation: ${student.motherOccupation}`,
+            `Mother's Income: ${student.motherIncome}`,
+            `Mother's Mobile: ${student.motherMobile}`,
+            `Residential Address Line 1: ${student.residentialAddress1}`,
+            `Residential Address Line 2: ${student.residentialAddress2}`,
+            `Residential Address Line 3: ${student.residentialAddress3}`,
+            `Residential City: ${student.residentialCity}`,
+            `Residential State: ${student.residentialState}`,
+            `Residential Pincode: ${student.residentialPincode}`,
+            `Local Guardian Name: ${student.localGuardianName}`,
+            `Local Guardian Address Line 1: ${student.localGuardianAddress1}`,
+            `Local Guardian Address Line 2: ${student.localGuardianAddress2}`,
+            `Local Guardian Address Line 3: ${student.localGuardianAddress3}`,
+            `Local Guardian City: ${student.localGuardianCity}`,
+            `Local Guardian State: ${student.localGuardianState}`,
+            `Local Guardian Pincode: ${student.localGuardianPincode}`,
+            `Local Guardian Mobile: ${student.localGuardianMobile}`,
+            `Siblings: ${student.siblings}`,
+            `Student Email: ${student.studentEmail}`,
+            `Student Mobile: ${student.studentMobile}`,
+            `Religion: ${student.religion}`,
+            `Blood Group: ${student.bloodGroup}`,
+            `Allergies: ${student.allergies}`,
+            `Health Problems: ${student.healthProblems}`
+        ];
+
+        let y = 30;
+        details.forEach((detail) => {
+            doc.setFontSize(12);
+            doc.text(detail, 20, y);
+            y += 10;
+        });
+
+        doc.save(`${student.name}_Details.pdf`);
+    };
+
     return (
         <div className="student-details-container">
             {student ? (
                 <div className="student-details">
                     <h1>Student Details</h1>
+                    {imageUrl && <img src={imageUrl} alt="Student" className="student-image" />} {/* Display student image */}
                     {isEditing ? (
                         <form className="student-form">
                             <label>
@@ -353,7 +417,7 @@ const StudentDetails = () => {
                             <label>
                                 Student Email:
                                 <input
-                                    type="text"
+                                    type="email"
                                     name="studentEmail"
                                     value={updatedStudent.studentEmail || ''}
                                     onChange={handleInputChange}
@@ -410,11 +474,6 @@ const StudentDetails = () => {
                                     placeholder="Health Problems"
                                 />
                             </label>
-                            {/* Add more fields as needed */}
-                            <div>
-                                <button type="button" onClick={handleUpdate}>Save</button>
-                                <button type="button" onClick={() => setIsEditing(false)}>Cancel</button>
-                            </div>
                         </form>
                     ) : (
                         <div className="student-info">
@@ -453,13 +512,18 @@ const StudentDetails = () => {
                             <p><strong>Blood Group:</strong> {student.bloodGroup}</p>
                             <p><strong>Allergies:</strong> {student.allergies}</p>
                             <p><strong>Health Problems:</strong> {student.healthProblems}</p>
-                            {/* Display more fields as needed */}
-                            <div>
-                                <button type="button" onClick={() => setIsEditing(true)}>Edit</button>
-                                <button type="button" onClick={handleDelete}>Delete</button>
-                            </div>
                         </div>
                     )}
+                    <div className="student-actions">
+                        {isEditing ? (
+                            <button onClick={handleUpdate}>Save</button>
+                        ) : (
+                            <button onClick={() => setIsEditing(true)}>Edit</button>
+                        )}
+                        <button onClick={handleDelete}>Delete</button>
+                        <button onClick={generatePDF}>Download PDF</button>
+                        {!isEditing && <button onClick={() => navigate('/root')}>Back</button>}
+                    </div>
                 </div>
             ) : (
                 <p>Loading student details...</p>
